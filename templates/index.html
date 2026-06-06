@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INK SIGHT</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div style="position: absolute; top: 20px; left: 30px; z-index: 100;">
+                <a href="/" style="color: white; text-decoration: none; font-size: 1em; font-weight: 600; display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 25px; backdrop-filter: blur(10px); transition: all 0.3s ease;">
+                    <i class="fas fa-home"></i> Home
+                </a>
+            </div>
+            <h1>
+                <div class="header-logo">
+                    <div class="logo-quadrant top-left"></div>
+                    <div class="logo-quadrant top-right"></div>
+                    <div class="logo-quadrant bottom-left"></div>
+                    <div class="logo-quadrant bottom-right"></div>
+                </div>
+                INK SIGHT
+            </h1>
+            <p class="subtitle">Comprehensive text analysis with keyness, sentiment, clustering, and sensorimotor analysis</p>
+            <div style="position: absolute; top: 20px; right: 30px; z-index: 100;">
+                <a href="/logout" style="color: white; text-decoration: none; font-size: 1em; font-weight: 600; display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 25px; backdrop-filter: blur(10px); transition: all 0.3s ease;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </header>
+
+        <!-- Guided Analysis Wizard -->
+        <div id="analysisWizard" class="analysis-wizard">
+            <!-- Step Progress Indicator -->
+            <div class="step-progress" role="navigation" aria-label="Analysis wizard steps">
+                <div class="step-item active" data-step="1" role="tab" aria-selected="true" aria-label="Step 1: Upload">
+                    <div class="step-number" aria-hidden="true">1</div>
+                    <div class="step-label">Upload</div>
+                </div>
+                <div class="step-connector" aria-hidden="true"></div>
+                <div class="step-item" data-step="2" role="tab" aria-selected="false" aria-label="Step 2: Configure">
+                    <div class="step-number" aria-hidden="true">2</div>
+                    <div class="step-label">Configure</div>
+                </div>
+                <div class="step-connector" aria-hidden="true"></div>
+                <div class="step-item" data-step="3" role="tab" aria-selected="false" aria-label="Step 3: Analyze">
+                    <div class="step-number" aria-hidden="true">3</div>
+                    <div class="step-label">Analyze</div>
+                </div>
+                <div class="step-connector" aria-hidden="true"></div>
+                <div class="step-item" data-step="4" role="tab" aria-selected="false" aria-label="Step 4: Results">
+                    <div class="step-number" aria-hidden="true">4</div>
+                    <div class="step-label">Results</div>
+                </div>
+            </div>
+
+            <!-- Step 1: Upload Files/Text -->
+            <div class="wizard-step active" id="step1">
+                <div class="step-header">
+                    <h2><i class="fas fa-upload"></i> Step 1: Upload Your Text</h2>
+                    <p class="step-description">Choose how you want to provide your text for analysis</p>
+                </div>
+
+                <!-- Step-by-step instructions for Step 1 -->
+                <div class="step-instructions">
+                    <h4><i class="fas fa-list-ol"></i> How to complete this step:</h4>
+                    <ol class="numbered-instructions">
+                        <li>Select one of the two input methods below (Upload Files or Type/Paste Text)</li>
+                        <li>If uploading files: Click or drag files to the upload area (max 3 files, 100MB each)</li>
+                        <li>If typing text: Enter or paste at least 5 words in the text box</li>
+                        <li>Review your selection and click "Next" to continue</li>
+                    </ol>
+                </div>
+
+                <div class="upload-options">
+                    <div class="option-card" onclick="selectUploadMethod('file')" tabindex="0" role="button" aria-label="Upload files option">
+                        <i class="fas fa-file-upload" aria-hidden="true"></i>
+                        <h3>Upload Files</h3>
+                        <p>Upload documents (.txt, .docx, .pdf, etc.)</p>
+                    </div>
+                    <div class="option-card" onclick="selectUploadMethod('text')" tabindex="0" role="button" aria-label="Type or paste text option">
+                        <i class="fas fa-keyboard" aria-hidden="true"></i>
+                        <h3>Type/Paste Text</h3>
+                        <p>Enter or paste text directly</p>
+                    </div>
+                </div>
+
+                <div id="fileUploadSection" class="upload-method-section" style="display: none;">
+                    <h3><i class="fas fa-info-circle"></i> File Upload Instructions</h3>
+                    <ul class="instruction-list">
+                        <li>Drag and drop files or click to browse</li>
+                        <li>Supported formats: .txt, .docx, .doc, .pdf, .ppt, .pptx, .odt, .rtf, .md, .csv, .xlsx, .xls</li>
+                        <li>Maximum file size: 100MB per file</li>
+                        <li>You can upload up to 3 files at once</li>
+                        <li>Files are automatically deleted after processing for your privacy</li>
+                    </ul>
+
+                    <form id="uploadForm" enctype="multipart/form-data">
+                        <div class="file-drop-area" role="button" tabindex="0" aria-label="File upload area - click or drag files here">
+                            <i class="fas fa-cloud-upload-alt" aria-hidden="true"></i>
+                            <p>Drag & drop files here or click to browse</p>
+                            <input type="file" id="fileInput" name="files"
+                                   accept=".txt,.docx,.doc,.pdf,.ppt,.pptx,.odt,.rtf,.md,.csv,.xlsx,.xls"
+                                   multiple
+                                   aria-label="File input">
+                        </div>
+                        <div id="selectedFiles" class="selected-files" role="list" aria-label="Selected files"></div>
+                    </form>
+                </div>
+
+                <div id="textInputSection" class="upload-method-section" style="display: none;">
+                    <h3><i class="fas fa-info-circle"></i> Text Input Instructions</h3>
+                    <ul class="instruction-list">
+                        <li>Type or paste your text in the box below</li>
+                        <li>Minimum 5 words required for analysis</li>
+                        <li>Word count is shown in real-time</li>
+                        <li>Text is processed securely and not stored</li>
+                    </ul>
+
+                    <textarea id="textInput"
+                              placeholder="Type or paste your text here... (minimum 5 words required)"
+                              rows="10"
+                              aria-label="Text input for analysis"
+                              aria-describedby="wordCount"></textarea>
+                    <div class="text-controls">
+                        <span id="wordCount" role="status" aria-live="polite">0 words</span>
+                    </div>
+
+                    <!-- Text Processing Progress (shown during text submission) -->
+                    <div id="textProcessingProgress" class="text-processing-progress" style="display: none;">
+                        <div class="processing-header">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Processing your text...</span>
+                        </div>
+                        <div class="text-progress-bar">
+                            <div class="text-progress-fill" id="textProgressFill"></div>
+                        </div>
+                        <div class="text-progress-percentage">
+                            <span id="textProgressPercent">0</span>%
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wizard-navigation">
+                    <button class="wizard-btn wizard-btn-next" onclick="goToStep(2)" id="step1NextBtn" disabled data-tooltip="Please select files or enter text first">
+                        Next: Configure Analysis <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Configure Analysis -->
+            <div class="wizard-step" id="step2">
+                <div class="step-header">
+                    <h2><i class="fas fa-cog"></i> Step 2: Configure Your Analysis</h2>
+                    <p class="step-description">Select the types of analysis you want to perform</p>
+                </div>
+
+                <!-- Step-by-step instructions for Step 2 -->
+                <div class="step-instructions">
+                    <h4><i class="fas fa-list-ol"></i> How to complete this step:</h4>
+                    <ol class="numbered-instructions">
+                        <li>Review the four analysis types available (all are enabled by default)</li>
+                        <li>Click on any analysis card to read more about what it does</li>
+                        <li>Toggle off any analysis types you don't need by unchecking the box</li>
+                        <li>At least one analysis type must remain enabled</li>
+                        <li>Click "Next" when you're satisfied with your selection</li>
+                    </ol>
+                </div>
+
+                <div class="analysis-options">
+                    <div class="analysis-option-card selected" data-analysis="keyness">
+                        <div class="option-header">
+                            <i class="fas fa-key"></i>
+                            <h3>Keyness Analysis</h3>
+                        </div>
+                        <p>Identify the most significant words and their frequencies</p>
+                        <div class="option-toggle">
+                            <input type="checkbox" id="keynessToggle" checked>
+                            <label for="keynessToggle">Enabled</label>
+                        </div>
+                    </div>
+
+                    <div class="analysis-option-card selected" data-analysis="sentiment">
+                        <div class="option-header">
+                            <i class="fas fa-smile"></i>
+                            <h3>Sentiment & Emotion</h3>
+                        </div>
+                        <p>Analyze emotional tone and sentiment distribution</p>
+                        <div class="option-toggle">
+                            <input type="checkbox" id="sentimentToggle" checked>
+                            <label for="sentimentToggle">Enabled</label>
+                        </div>
+                    </div>
+
+                    <div class="analysis-option-card selected" data-analysis="clustering">
+                        <div class="option-header">
+                            <i class="fas fa-project-diagram"></i>
+                            <h3>Semantic Clustering</h3>
+                        </div>
+                        <p>Group related words into thematic clusters</p>
+                        <div class="option-toggle">
+                            <input type="checkbox" id="clusteringToggle" checked>
+                            <label for="clusteringToggle">Enabled</label>
+                        </div>
+                    </div>
+
+                    <div class="analysis-option-card selected" data-analysis="sensorimotor">
+                        <div class="option-header">
+                            <i class="fas fa-hand-pointer"></i>
+                            <h3>Sensory Word Analysis</h3>
+                        </div>
+                        <p>Categorize sensory-related words by type (visual, auditory, etc.)</p>
+                        <div class="option-toggle">
+                            <input type="checkbox" id="sensorimotorToggle" checked>
+                            <label for="sensorimotorToggle">Enabled</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wizard-navigation">
+                    <button class="wizard-btn wizard-btn-back" onclick="goToStep(1)">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                    <button class="wizard-btn wizard-btn-next" onclick="goToStep(3)">
+                        Next: Review & Analyze <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Review and Start Analysis -->
+            <div class="wizard-step" id="step3">
+                <div class="step-header">
+                    <h2><i class="fas fa-check-circle"></i> Step 3: Review & Start Analysis</h2>
+                    <p class="step-description">Review your selections and start the analysis</p>
+                </div>
+
+                <!-- Step-by-step instructions for Step 3 -->
+                <div class="step-instructions">
+                    <h4><i class="fas fa-list-ol"></i> How to complete this step:</h4>
+                    <ol class="numbered-instructions">
+                        <li>Review your input method and file/text details in the left panel</li>
+                        <li>Verify the analysis types you've selected in the right panel</li>
+                        <li>If you need to make changes, click "Back" to return to previous steps</li>
+                        <li>When ready, click "Start Analysis" to begin processing</li>
+                        <li>The analysis typically takes 10-30 seconds depending on text length</li>
+                    </ol>
+                </div>
+
+                <div class="review-section">
+                    <div class="review-card">
+                        <h3><i class="fas fa-file"></i> Input Summary</h3>
+                        <div id="reviewInputSummary"></div>
+                    </div>
+
+                    <div class="review-card">
+                        <h3><i class="fas fa-tasks"></i> Analysis Types</h3>
+                        <div id="reviewAnalysisSummary"></div>
+                    </div>
+                </div>
+
+                <div class="analysis-info-box">
+                    <i class="fas fa-info-circle"></i>
+                    <p><strong>What happens next?</strong> Your text will be analyzed using advanced NLP techniques. The process typically takes 10-30 seconds depending on text length.</p>
+                </div>
+
+                <div class="wizard-navigation">
+                    <button class="wizard-btn wizard-btn-back" onclick="goToStep(2)">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                    <button class="wizard-btn wizard-btn-analyze" onclick="startAnalysis()" id="startAnalysisBtn">
+                        <i class="fas fa-chart-line"></i> Start Analysis
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 4: Results (handled by existing results section) -->
+        </div>
+
+
+        <!-- Enhanced Progress Indicator -->
+        <div id="progressContainer" class="progress-container" style="display: none;">
+            <div class="progress-header">
+                <h2><i class="fas fa-spinner fa-spin"></i> Analyzing Your Text</h2>
+                <p class="progress-subtitle">Please wait while we process your content...</p>
+            </div>
+
+            <!-- Main Progress Bar -->
+            <div class="main-progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Analysis progress">
+                <div class="progress-bar-track">
+                    <div class="progress-bar-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-percentage">
+                    <span id="progressPercent">0</span>%
+                </div>
+            </div>
+
+            <!-- Analysis Stages -->
+            <div class="analysis-stages">
+                <div class="stage-item" id="stage-upload" data-stage="upload">
+                    <div class="stage-icon">
+                        <i class="fas fa-file-upload"></i>
+                    </div>
+                    <div class="stage-content">
+                        <h4>File Processing</h4>
+                        <p>Reading and extracting text from your files</p>
+                        <div class="stage-status">
+                            <span class="status-badge pending">Pending</span>
+                        </div>
+                    </div>
+                    <div class="stage-check">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+
+                <div class="stage-item" id="stage-preprocessing" data-stage="preprocessing">
+                    <div class="stage-icon">
+                        <i class="fas fa-filter"></i>
+                    </div>
+                    <div class="stage-content">
+                        <h4>Text Preprocessing</h4>
+                        <p>Tokenizing and cleaning the text data</p>
+                        <div class="stage-status">
+                            <span class="status-badge pending">Pending</span>
+                        </div>
+                    </div>
+                    <div class="stage-check">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+
+                <div class="stage-item" id="stage-keyness" data-stage="keyness">
+                    <div class="stage-icon">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <div class="stage-content">
+                        <h4>Keyness Analysis</h4>
+                        <p>Identifying significant words and frequencies</p>
+                        <div class="stage-status">
+                            <span class="status-badge pending">Pending</span>
+                        </div>
+                    </div>
+                    <div class="stage-check">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+
+                <div class="stage-item" id="stage-sentiment" data-stage="sentiment">
+                    <div class="stage-icon">
+                        <i class="fas fa-smile"></i>
+                    </div>
+                    <div class="stage-content">
+                        <h4>Sentiment Analysis</h4>
+                        <p>Analyzing emotional tone and sentiment</p>
+                        <div class="stage-status">
+                            <span class="status-badge pending">Pending</span>
+                        </div>
+                    </div>
+                    <div class="stage-check">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+
+                <div class="stage-item" id="stage-clustering" data-stage="clustering">
+                    <div class="stage-icon">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                    <div class="stage-content">
+                        <h4>Semantic Clustering</h4>
+                        <p>Grouping related words into themes</p>
+                        <div class="stage-status">
+                            <span class="status-badge pending">Pending</span>
+                        </div>
+                    </div>
+                    <div class="stage-check">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+
+                <div class="stage-item" id="stage-sensorimotor" data-stage="sensorimotor">
+                    <div class="stage-icon">
+                        <i class="fas fa-hand-pointer"></i>
+                    </div>
+                    <div class="stage-content">
+                        <h4>Sensorimotor Analysis</h4>
+                        <p>Analyzing sensory and motor language patterns</p>
+                        <div class="stage-status">
+                            <span class="status-badge pending">Pending</span>
+                        </div>
+                    </div>
+                    <div class="stage-check">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+
+                <div class="stage-item" id="stage-finalize" data-stage="finalize">
+                    <div class="stage-icon">
+                        <i class="fas fa-check-double"></i>
+                    </div>
+                    <div class="stage-content">
+                        <h4>Finalizing Results</h4>
+                        <p>Compiling and formatting your analysis</p>
+                        <div class="stage-status">
+                            <span class="status-badge pending">Pending</span>
+                        </div>
+                    </div>
+                    <div class="stage-check">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Stage Display -->
+            <div class="current-stage-display" role="status" aria-live="polite" aria-atomic="true">
+                <div class="stage-spinner" aria-hidden="true">
+                    <div class="spinner"></div>
+                </div>
+                <div class="stage-text">
+                    <p id="currentStageText">Initializing analysis...</p>
+                </div>
+            </div>
+
+            <!-- Estimated Time -->
+            <div class="progress-footer">
+                <p class="estimated-time">
+                    <i class="fas fa-clock"></i> Estimated time: <span id="estimatedTime">20-30 seconds</span>
+                </p>
+            </div>
+
+            <!-- Demo Mode Toggle (for testing - remove in production) -->
+            <!-- <div style="text-align: center; margin-top: 20px;">
+                <button onclick="testProgressBar()" class="wizard-btn" style="background: #ffc107; color: #333;">
+                    <i class="fas fa-play"></i> Test Progress Animation
+                </button>
+            </div> -->
+        </div>
+
+
+        <div id="reportContent">
+        
+        <!-- Results Section with Tabs -->
+        <div id="resultsContainer" class="results-container" style="display: none;">
+            <h2 style="text-align: center; margin-bottom: 30px; font-size: 2.5em; background: linear-gradient(135deg, var(--primary-teal), var(--secondary-emerald)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                Analysis Results
+            </h2>
+            
+            <!-- File Tabs for Multiple Documents -->
+            <div id="fileTabs" class="file-tabs"></div>
+            
+            <!-- Tabbed Interface -->
+            <div class="results-tabs-container">
+                <div class="results-tabs">
+                    <button class="results-tab active" onclick="switchTab('overview')">
+                        <i class="fas fa-chart-bar"></i> Overview
+                    </button>
+                    <button class="results-tab" onclick="switchTab('keyness')">
+                        <i class="fas fa-key"></i> Keyness
+                    </button>
+                    <button class="results-tab" onclick="switchTab('sentiment')">
+                        <i class="fas fa-smile"></i> Sentiment
+                    </button>
+                    <button class="results-tab" onclick="switchTab('clusters')">
+                        <i class="fas fa-project-diagram"></i> Clusters
+                    </button>
+                    <button class="results-tab" onclick="switchTab('sensory')">
+                        <i class="fas fa-eye"></i> Sensory
+                    </button>
+                </div>
+                
+                <!-- Tab Content: Overview -->
+                <div id="tab-overview" class="tab-content active">
+                    <div class="tab-section-header">
+                        <h3 class="tab-section-title">Document Statistics</h3>
+                        <p class="tab-section-description">
+                            Comprehensive metrics including word counts, readability scores, and lexical diversity analysis.
+                        </p>
+                    </div>
+                    <div id="statsGrid" class="stats-grid"></div>
+                </div>
+                
+                <!-- Tab Content: Keyness -->
+                <div id="tab-keyness" class="tab-content">
+                    <div class="tab-section-header">
+                        <h3 class="tab-section-title">Keyness Analysis</h3>
+                        <p class="tab-section-description">
+                            Interactive visualization of the most frequently occurring words in your text. 
+                            Switch between chart and word cloud views, and filter by top 10, 20, or 50 words.
+                        </p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="keynessChart"></canvas>
+                    </div>
+                    <div id="keynessTable" class="data-table"></div>
+                </div>
+                
+                <!-- Tab Content: Sentiment -->
+                <div id="tab-sentiment" class="tab-content">
+                    <div class="tab-section-header">
+                        <h3 class="tab-section-title">Advanced Sentiment & Emotion Analysis</h3>
+                        <p class="tab-section-description">
+                            <strong>NEW!</strong> Comprehensive emotional intelligence with 12 emotions, intensity levels, sentence-by-sentence analysis, 
+                            and 5 interactive views including Timeline, Emotion Words, and Advanced VAD metrics.
+                        </p>
+                    </div>
+                    <div class="charts-row">
+                        <div class="chart-container half">
+                            <canvas id="sentimentChart"></canvas>
+                        </div>
+                        <div class="chart-container half">
+                            <canvas id="emotionChart"></canvas>
+                        </div>
+                    </div>
+                    <div id="sentimentSummary" class="sentiment-summary"></div>
+                </div>
+                
+                <!-- Tab Content: Clusters -->
+                <div id="tab-clusters" class="tab-content">
+                    <div class="tab-section-header">
+                        <h3 class="tab-section-title">Semantic Clusters</h3>
+                        <p class="tab-section-description">
+                            Groups semantically related words together to reveal themes and topics in your text.
+                        </p>
+                    </div>
+                    <div id="clusterContainer" class="cluster-container"></div>
+                </div>
+                
+                <!-- Tab Content: Sensory -->
+                <div id="tab-sensory" class="tab-content">
+                    <div class="tab-section-header">
+                        <h3 class="tab-section-title">Sensory Word Analysis</h3>
+                        <p class="tab-section-description">
+                            This analysis identifies and categorizes sensory-related words in your text across different sensory modalities.
+                        </p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="sensorimotorChart"></canvas>
+                    </div>
+                    <div id="sensorimotorSummary" class="sensorimotor-summary"></div>
+                </div>
+            </div>
+
+            <!-- Comparison View (for multiple files) -->
+            <div id="comparisonSection" class="results-section" style="display: none;">
+                <h3><i class="fas fa-columns"></i> Document Comparison</h3>
+                <div id="comparisonContainer" class="comparison-container"></div>
+            </div>
+
+        </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons" id="actionButtons" style="display: none;">
+                <button onclick="downloadCompletePDF()" class="action-btn" id="downloadPDFBtn" disabled>
+                    <i class="fas fa-file-pdf"></i> Download PDF
+                </button>
+                <button onclick="printResults()" class="action-btn" id="printBtn" disabled>
+                    <i class="fas fa-print"></i> Print Results
+                </button>
+                <button onclick="resetAnalyzer()" class="action-btn secondary">
+                    <i class="fas fa-redo"></i> New Analysis
+                </button>
+            </div>
+        </div>
+
+        <!-- Error Container -->
+        <div id="errorContainer" class="error-container" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p id="errorMessage"></p>
+        </div>
+    </div>
+
+    <footer>
+        <p><i class="fas fa-shield-alt"></i> Privacy Notice: All uploaded files are automatically deleted after processing.</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
