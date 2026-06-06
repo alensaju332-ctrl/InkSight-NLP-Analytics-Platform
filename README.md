@@ -1,3 +1,6 @@
+<p align="center">
+  <img src="assets/inksight-logo.jpeg" alt="InkSight Logo" width="450">
+</p>
 # 🎨 INK SIGHT - Advanced Text Analysis Platform
 
 <p align="left">
@@ -5,6 +8,14 @@
   <img src="assets/status-badge.png" alt="Status Active">
   <img src="assets/license-badge.png" alt="MIT License">
 </p>
+## 🌐 Live Demo
+
+## 🌐 Live Demo
+
+🚀 **Try InkSight Online:**  
+https://inksight-yixa.onrender.com/analyze-page
+
+No installation required — upload a document or paste text and start analyzing instantly.
 
 ## 🌟 Overview
 
